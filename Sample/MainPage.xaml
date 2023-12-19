@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="Sample.MainPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:tabview="clr-namespace:MPowerKit.TabView;assembly=MPowerKit.TabView"
+             BindingContext="{Binding Source={RelativeSource Self}}">
+
+    <Grid ColumnSpacing="0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition Width="3" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+
+        <BoxView Grid.Column="1"
+                 HorizontalOptions="Fill"
+                 VerticalOptions="Fill"
+                 Color="Gray" />
+
+        <!--  using tabs from markup  -->
+        <tabview:TabView HeaderBarAlignment="Bottom"
+                         SelectedHeaderBackgroundColor="Transparent">
+            <tabview:TabView.HeaderTemplate>
+                <DataTemplate>
+                    <Grid Padding="20,0">
+                        <BoxView HeightRequest="5"
+                                 HorizontalOptions="Fill"
+                                 VerticalOptions="Start"
+                                 Color="DarkMagenta" />
+                        <Label HorizontalOptions="Center"
+                               Text="{Binding .}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                </DataTemplate>
+            </tabview:TabView.HeaderTemplate>
+
+            <tabview:TabView.SelectedHeaderTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Label Margin="20,0"
+                               HorizontalOptions="Center"
+                               Text="{Binding .}"
+                               VerticalOptions="Center" />
+                        <BoxView HeightRequest="3"
+                                 HorizontalOptions="Fill"
+                                 VerticalOptions="End"
+                                 Color="DarkCyan" />
+                    </Grid>
+                </DataTemplate>
+            </tabview:TabView.SelectedHeaderTemplate>
+
+            <tabview:TabViewItem Header="First Tab">
+                <Grid BackgroundColor="Purple"
+                      HorizontalOptions="Start"
+                      VerticalOptions="Center">
+                    <Label HorizontalOptions="Center"
+                           Text="Some content for First Tab"
+                           TextColor="White"
+                           VerticalOptions="Center" />
+                </Grid>
+            </tabview:TabViewItem>
+
+            <tabview:TabViewItem x:Name="secondTab">
+                <tabview:TabViewItem.Header>
+                    <StackLayout Orientation="Horizontal"
+                                 Spacing="0">
+                        <Label Margin="10"
+                               Text="Second Tab"
+                               VerticalOptions="Center">
+                            <Label.Triggers>
+                                <DataTrigger Binding="{Binding IsSelected, Source={x:Reference secondTab}}"
+                                             TargetType="Label"
+                                             Value="False">
+                                    <Setter Property="TextColor"
+                                            Value="Green" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsSelected, Source={x:Reference secondTab}}"
+                                             TargetType="Label"
+                                             Value="False">
+                                    <Setter Property="TextColor"
+                                            Value="Red" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <BoxView Margin="10"
+                                 HeightRequest="20"
+                                 VerticalOptions="Center"
+                                 WidthRequest="20"
+                                 Color="Orange" />
+                    </StackLayout>
+                </tabview:TabViewItem.Header>
+
+                <Grid BackgroundColor="Aqua">
+                    <Label HorizontalOptions="Center"
+                           Text="Some content for Second Tab"
+                           VerticalOptions="Center" />
+                </Grid>
+            </tabview:TabViewItem>
+
+            <tabview:TabViewItem Header="Third Tab">
+                <Grid BackgroundColor="Black">
+                    <Label HorizontalOptions="Center"
+                           Text="Some content for Third Tab"
+                           TextColor="White"
+                           VerticalOptions="Center" />
+                </Grid>
+            </tabview:TabViewItem>
+        </tabview:TabView>
+
+        <!--  using tabs from itemssource  -->
+        <tabview:TabView x:Name="secondTabView"
+                         Grid.Column="2"
+                         ItemsSource="{Binding People}">
+            <tabview:TabView.HeaderItemsLayout>
+                <FlexLayout JustifyContent="SpaceAround" />
+            </tabview:TabView.HeaderItemsLayout>
+            <tabview:TabView.HeaderTemplate>
+                <DataTemplate>
+                    <Grid HorizontalOptions="Fill"
+                          VerticalOptions="Fill">
+                        <Label Margin="10,0"
+                               HorizontalOptions="Center"
+                               Text="{Binding FirstName}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                </DataTemplate>
+            </tabview:TabView.HeaderTemplate>
+            <tabview:TabView.SelectedHeaderTemplate>
+                <DataTemplate>
+                    <Grid HorizontalOptions="Fill"
+                          VerticalOptions="Fill">
+                        <Label Margin="10,0"
+                               HorizontalOptions="Center"
+                               Text="{Binding FirstName}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                </DataTemplate>
+            </tabview:TabView.SelectedHeaderTemplate>
+            <tabview:TabView.ContentTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Label HorizontalOptions="Center"
+                               Text="{Binding LastName}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                </DataTemplate>
+            </tabview:TabView.ContentTemplate>
+        </tabview:TabView>
+    </Grid>
+
+</ContentPage>

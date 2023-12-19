@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary x:Class="MPowerKit.TabView.TabViewStyle"
+                    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    xmlns:controls="clr-namespace:MPowerKit.TabView">
+
+    <Style TargetType="controls:TabView">
+        <Setter Property="Padding"
+                Value="0" />
+        <Setter Property="Margin"
+                Value="0" />
+        <Setter Property="ControlTemplate">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Grid RowSpacing="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid.Triggers>
+                            <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
+                                         TargetType="Grid"
+                                         Value="Bottom">
+                                <Setter Property="Rotation"
+                                        Value="180" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
+                                         TargetType="Grid"
+                                         Value="Top">
+                                <Setter Property="Rotation"
+                                        Value="0" />
+                            </DataTrigger>
+                        </Grid.Triggers>
+                        <ScrollView x:Name="PART_HeadersScrollView"
+                                    Grid.Row="0"
+                                    Margin="{TemplateBinding Padding}"
+                                    BackgroundColor="{TemplateBinding HeaderBarBackgroundColor}"
+                                    HeightRequest="{TemplateBinding HeaderHeightRequest}"
+                                    HorizontalOptions="Fill"
+                                    HorizontalScrollBarVisibility="Never"
+                                    Orientation="Horizontal"
+                                    VerticalOptions="Fill"
+                                    VerticalScrollBarVisibility="Never">
+                            <ScrollView.Triggers>
+                                <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
+                                             TargetType="ScrollView"
+                                             Value="Bottom">
+                                    <Setter Property="Rotation"
+                                            Value="180" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
+                                             TargetType="ScrollView"
+                                             Value="Top">
+                                    <Setter Property="Rotation"
+                                            Value="0" />
+                                </DataTrigger>
+                            </ScrollView.Triggers>
+                            <controls:ItemsPresenter HorizontalOptions="Fill"
+                                                     VerticalOptions="Fill" />
+                        </ScrollView>
+
+                        <Grid x:Name="PART_ContentContainer"
+                              Grid.Row="1"
+                              Margin="{TemplateBinding Padding}"
+                              BackgroundColor="{TemplateBinding ContentBackgroundColor}"
+                              HorizontalOptions="Fill"
+                              VerticalOptions="Fill">
+                            <Grid.Triggers>
+                                <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
+                                             TargetType="Grid"
+                                             Value="Bottom">
+                                    <Setter Property="Rotation"
+                                            Value="180" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
+                                             TargetType="Grid"
+                                             Value="Top">
+                                    <Setter Property="Rotation"
+                                            Value="0" />
+                                </DataTrigger>
+                            </Grid.Triggers>
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>
