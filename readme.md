@@ -3,7 +3,7 @@ Fully customizable .NET MAUI TabView
 
 It is written using .NET MAUI without native code and it is fully compatible with all platforms MAUI supports
 
-[![NuGet](https://img.shields.io/nuget/v/MPowerKit.TabView.svg?maxAge=2592000)](https://www.nuget.org/packages/MPowerKit.TabView)
+[![NuGet](https://img.shields.io/nuget/v/MPowerKit.TabView.svg?maxAge=2592000)](https://www.nuget.org/packages/MPowerKit.TabView))
 
 ### Initialize:
 Make sure to initialize the UI of the TabView inside your App.xaml file:
