@@ -12,8 +12,6 @@ public partial class MainPage : ContentPage
 {
     public MainPage()
     {
-        InitializeComponent();
-
         Title = "Main Page";
 
         ObservableCollection<PersonViewModel> people = [];
@@ -22,7 +20,9 @@ public partial class MainPage : ContentPage
             people.Add(new PersonViewModel() { FirstName = $"FirstName {i}", LastName = $"LastName {i}" });
         }
         People = people;
+
+        InitializeComponent();
     }
 
-    public ObservableCollection<PersonViewModel> People { get; set; } = new ObservableCollection<PersonViewModel>();
+    public ObservableCollection<PersonViewModel> People { get; set; } = [];
 }
