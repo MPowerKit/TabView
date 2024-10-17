@@ -20,6 +20,10 @@
         <!--  using tabs from markup  -->
         <tabview:TabView HeaderBarAlignment="Bottom"
                          SelectedHeaderBackgroundColor="Transparent">
+            <tabview:TabView.HeaderItemsLayout>
+                <Grid ColumnDefinitions="*,*,*"
+                      WidthRequest="{Binding Width, Source={RelativeSource Mode=FindAncestor, AncestorType={x:Type ScrollView}}}" />
+            </tabview:TabView.HeaderItemsLayout>
             <tabview:TabView.HeaderTemplate>
                 <DataTemplate>
                     <Grid Padding="20,0">
@@ -49,7 +53,8 @@
                 </DataTemplate>
             </tabview:TabView.SelectedHeaderTemplate>
 
-            <tabview:TabViewItem Header="First Tab">
+            <tabview:TabViewItem Column="0"
+                                 Header="First Tab">
                 <Grid BackgroundColor="Purple"
                       HorizontalOptions="Start"
                       VerticalOptions="Center">
@@ -60,7 +65,8 @@
                 </Grid>
             </tabview:TabViewItem>
 
-            <tabview:TabViewItem x:Name="secondTab">
+            <tabview:TabViewItem x:Name="secondTab"
+                                 Column="1">
                 <tabview:TabViewItem.Header>
                     <StackLayout Orientation="Horizontal"
                                  Spacing="0">
@@ -97,7 +103,8 @@
                 </Grid>
             </tabview:TabViewItem>
 
-            <tabview:TabViewItem Header="Third Tab">
+            <tabview:TabViewItem Column="2"
+                                 Header="Third Tab">
                 <Grid BackgroundColor="Black">
                     <Label HorizontalOptions="Center"
                            Text="Some content for Third Tab"
@@ -112,7 +119,8 @@
                          Grid.Column="2"
                          ItemsSource="{Binding People}">
             <tabview:TabView.HeaderItemsLayout>
-                <FlexLayout JustifyContent="SpaceAround" />
+                <FlexLayout JustifyContent="SpaceAround"
+                            WidthRequest="{Binding Width, Source={RelativeSource Mode=FindAncestor, AncestorType={x:Type ScrollView}}}" />
             </tabview:TabView.HeaderItemsLayout>
             <tabview:TabView.HeaderTemplate>
                 <DataTemplate>

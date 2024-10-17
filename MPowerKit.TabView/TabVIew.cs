@@ -10,150 +10,156 @@ namespace MPowerKit.TabView;
 [ContentProperty("Tabs")]
 public class TabView : ContentView
 {
-    private Grid _contentContainer;
-    private ScrollView _headersScroll;
-    private TabViewItem _prevSelectedTabItem;
-    private bool _useItemsSource;
-    private Layout _headersContainer;
+    protected Grid? ContentContainer;
+    protected ScrollView? HeadersScroll;
+    protected TabViewItem? PrevSelectedTabItem;
+    protected Layout HeadersContainer;
 
-    private Layout _stackItemsLayout => new StackLayout()
+    protected bool UseItemsSource => ItemsSource is not null;
+
+    public ObservableCollection<TabViewItem> Tabs { get; } = [];
+
+    protected Layout StackItemsLayout
     {
-        VerticalOptions = LayoutOptions.Fill,
-        HorizontalOptions = LayoutOptions.Fill,
-        Spacing = 0,
-        Orientation = StackOrientation.Horizontal
-    };
+        get
+        {
+            var stack = new StackLayout()
+            {
+                VerticalOptions = LayoutOptions.Fill,
+                HorizontalOptions = LayoutOptions.Fill,
+                Spacing = 0,
+                Orientation = StackOrientation.Horizontal
+            };
+
+            stack.SetBinding(StackLayout.OrientationProperty, new Binding(ScrollView.OrientationProperty.PropertyName,
+                source: new RelativeBindingSource(RelativeBindingSourceMode.FindAncestor, typeof(ScrollView)),
+                converter: new ScrollOrientationToStackOrientationConverter()));
+
+            return stack;
+        }
+    }
 
     public TabView()
     {
         Tabs.CollectionChanged += Tabs_CollectionChanged;
     }
 
-    public ObservableCollection<TabViewItem> Tabs { get; } = new ObservableCollection<TabViewItem>();
-
     protected override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
 
-        _contentContainer = this.GetTemplateChild("PART_ContentContainer") as Grid;
-        _headersScroll = this.GetTemplateChild("PART_HeadersScrollView") as ScrollView;
+        ContentContainer = GetTemplateChild("PART_ContentContainer") as Grid;
+        HeadersScroll = GetTemplateChild("PART_HeadersScrollView") as ScrollView;
 
         InitHeaderBarLayout();
     }
 
-    private void InitHeaderBarLayout()
+    protected virtual void InitHeaderBarLayout()
     {
-        if (_headersScroll == null || !(_headersScroll.Content is ItemsPresenter)) return;
+        if (HeadersScroll == null || HeadersScroll.Content is not ItemsPresenter presenter) return;
 
-        var newLayout = HeaderItemsLayout ?? _stackItemsLayout;
+        var newLayout = HeaderItemsLayout ?? StackItemsLayout;
 
-        if (_headersContainer != null)
+        if (HeadersContainer != null)
         {
-            foreach (var item in _headersContainer.Children)
+            foreach (var item in HeadersContainer.Children)
             {
                 newLayout.Children.Add(item);
             }
 
-            _headersContainer.Children.Clear();
+            HeadersContainer.Children.Clear();
         }
 
-        _headersContainer = newLayout;
+        HeadersContainer = newLayout;
 
-        (_headersScroll.Content as ItemsPresenter).Content = _headersContainer;
+        presenter.Content = HeadersContainer;
     }
 
     protected override void OnBindingContextChanged()
     {
         base.OnBindingContextChanged();
 
-        if (this.BindingContext != null && !_useItemsSource)
+        if (BindingContext is not null && !UseItemsSource)
         {
             foreach (var tab in Tabs)
             {
-                if (tab.BindingContext != this.BindingContext) tab.BindingContext = this.BindingContext;
+                if (tab.BindingContext != BindingContext)
+                    tab.BindingContext = BindingContext;
             }
         }
     }
 
-    protected override void OnPropertyChanging([CallerMemberName] string propertyName = null)
+    protected override void OnPropertyChanging([CallerMemberName] string? propertyName = null)
     {
         base.OnPropertyChanging(propertyName);
 
-        if (propertyName == ItemsSourceProperty.PropertyName)
+        if (propertyName == ItemsSourceProperty.PropertyName && ItemsSource is not null)
         {
-            if (ItemsSource != null)
-            {
-                if (ItemsSource is INotifyCollectionChanged itemsSource) itemsSource.CollectionChanged -= ItemsSource_CollectionChanged;
+            if (ItemsSource is INotifyCollectionChanged itemsSource)
+                itemsSource.CollectionChanged -= ItemsSource_CollectionChanged;
 
-                _useItemsSource = false;
-
-                Tabs.Clear();
-            }
+            Tabs.Clear();
         }
         else if (propertyName == SelectedTabIndexProperty.PropertyName)
         {
-            if (SelectedTabIndex == -1) _prevSelectedTabItem = null;
-            else _prevSelectedTabItem = Tabs.ElementAtOrDefault(SelectedTabIndex);
+            PrevSelectedTabItem = Tabs.ElementAtOrDefault(SelectedTabIndex);
         }
     }
 
-    protected override void OnPropertyChanged([CallerMemberName] string propertyName = null)
+    protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         base.OnPropertyChanged(propertyName);
 
-        if (propertyName == ItemsSourceProperty.PropertyName && ItemsSource != null)
+        if (propertyName == ItemsSourceProperty.PropertyName && ItemsSource is not null)
         {
-            if (ItemsSource is INotifyCollectionChanged itemsSource) itemsSource.CollectionChanged += ItemsSource_CollectionChanged;
-
-            _useItemsSource = true;
+            if (ItemsSource is INotifyCollectionChanged itemsSource)
+                itemsSource.CollectionChanged += ItemsSource_CollectionChanged;
 
             InitItems(ItemsSource);
         }
         else if (propertyName == SelectedTabIndexProperty.PropertyName)
         {
-            if (SelectedTabIndex == -1)
-            {
-                if (_prevSelectedTabItem != null) _prevSelectedTabItem.IsSelected = false;
-            }
-            else if (_contentContainer != null)
-            {
-                if (_prevSelectedTabItem != null) _prevSelectedTabItem.IsSelected = false;
+            if (PrevSelectedTabItem is not null) PrevSelectedTabItem.IsSelected = false;
 
-                var newTab = Tabs.ElementAtOrDefault(SelectedTabIndex);
-                if (newTab != null) newTab.IsSelected = true;
+            var newTab = Tabs.ElementAtOrDefault(SelectedTabIndex);
+            if (newTab is not null)
+            {
+                if (newTab.IsEnabled)
+                {
+                    newTab.IsSelected = true;
+                }
+                else
+                {
+                    SelectClosestEnabledTab(newTab);
+                    return;
+                }
             }
 
-            SelectedTabChangedCommand?.Execute(SelectedTabChangedCommandParameter);
+            if (SelectedTabChangedCommand?.CanExecute(SelectedTabChangedCommandParameter) is true)
+                SelectedTabChangedCommand.Execute(SelectedTabChangedCommandParameter);
         }
-        else if (propertyName == ContentTemplateProperty.PropertyName && _useItemsSource)
+        else if (propertyName == ContentTemplateProperty.PropertyName && UseItemsSource)
         {
             foreach (var tab in Tabs)
             {
                 var index = Tabs.IndexOf(tab);
-                InitContentTemplate(tab.BindingContext, tab);
+                InitTabContentTemplate(tab.BindingContext, tab);
             }
         }
         else if (propertyName == HeaderItemsLayoutProperty.PropertyName)
         {
             InitHeaderBarLayout();
         }
-        else if (propertyName == HideTabsWhenDisabledProperty.PropertyName)
-        {
-            foreach (var tab in Tabs)
-            {
-                tab.HideWhenDisabled = HideTabsWhenDisabled;
-            }
-        }
     }
 
-    private void InitItems(IEnumerable source, bool useIndex = false, int index = 0)
+    protected virtual void InitItems(IEnumerable source, int index = 0, bool useIndex = false)
     {
-        if (source == null) return;
+        if (source is null) return;
 
         foreach (var item in source)
         {
             var tabItem = new TabViewItem();
-            InitContentTemplate(item, tabItem);
+            InitTabContentTemplate(item, tabItem);
 
             tabItem.BindingContext = item;
             tabItem.Header = item;
@@ -163,163 +169,167 @@ public class TabView : ContentView
         }
     }
 
-    private void InitContentTemplate(object item, TabViewItem tabItem)
+    protected virtual void InitTabContentTemplate(object item, TabViewItem tabItem)
     {
-        if (ContentTemplate != null)
+        if (ContentTemplate is not null)
         {
             var template = ContentTemplate;
             if (ContentTemplate is DataTemplateSelector selector) template = selector.SelectTemplate(item, this);
 
             var tabContent = template.CreateContent() as View;
-            tabContent.BindingContext ??= item;
+            tabContent!.BindingContext ??= item;
 
             tabItem.Content = tabContent;
+            return;
         }
-        else
-        {
-            var tabContent = new Label();
-            tabContent.Text = item.ToString();
 
-            tabItem.Content = tabContent;
+        tabItem.Content = new Label
+        {
+            Text = item.ToString()
+        };
+    }
+
+    protected virtual void ItemsSource_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        switch (e.Action)
+        {
+            case NotifyCollectionChangedAction.Add:
+                ItemsAdd(e);
+                break;
+            case NotifyCollectionChangedAction.Move:
+                ItemsMove(e);
+                break;
+            case NotifyCollectionChangedAction.Remove:
+                ItemsRemove(e);
+                break;
+            case NotifyCollectionChangedAction.Replace:
+                ItemsReplace(e);
+                break;
+            case NotifyCollectionChangedAction.Reset:
+                ItemsReset(e);
+                break;
         }
     }
 
-    private void ItemsSource_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    protected virtual void ItemsAdd(NotifyCollectionChangedEventArgs e)
+    {
+        InitItems(e.NewItems!, e.NewStartingIndex, true);
+    }
+
+    protected virtual void ItemsMove(NotifyCollectionChangedEventArgs e)
+    {
+        Tabs.Move(e.OldStartingIndex, e.NewStartingIndex);
+    }
+
+    protected virtual void ItemsRemove(NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems is null) return;
+
+        if (e.OldStartingIndex + e.OldItems.Count < SelectedTabIndex)
+        {
+            SelectedTabIndex -= e.OldItems.Count;
+        }
+        else if (SelectedTabIndex >= e.OldStartingIndex
+            && SelectedTabIndex <= e.OldStartingIndex + e.OldItems.Count)
+        {
+            var newIndex = e.OldStartingIndex + e.OldItems.Count + 1;
+            if (newIndex > Tabs.Count) newIndex = -1;
+            SelectedTabIndex = newIndex;
+        }
+
+        foreach (var item in e.OldItems)
+        {
+            Tabs.RemoveAt(e.OldStartingIndex);
+        }
+    }
+
+    protected virtual void ItemsReplace(NotifyCollectionChangedEventArgs e)
+    {
+        ItemsRemove(e);
+        ItemsAdd(e);
+    }
+
+    protected virtual void ItemsReset(NotifyCollectionChangedEventArgs e)
+    {
+        foreach (var item in Tabs)
+        {
+            item.PropertyChanged -= TabItem_PropertyChanged;
+        }
+
+        Tabs.Clear();
+
+        InitItems(ItemsSource);
+    }
+
+    protected virtual void Tabs_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         switch (e.Action)
         {
             case NotifyCollectionChangedAction.Add:
                 {
-                    InitItems(e.NewItems, true, e.NewStartingIndex);
+                    foreach (TabViewItem item in e.NewItems!)
+                    {
+                        item!.PropertyChanged += TabItem_PropertyChanged;
+
+                        HeadersContainer?.Children.Insert(e.NewStartingIndex, item.TabViewHeaderItem);
+                        ContentContainer?.Children.Insert(e.NewStartingIndex, item);
+                    }
+
+                    TabsInitialSelection(e);
                 }
                 break;
             case NotifyCollectionChangedAction.Move:
                 {
-                    Tabs.Move(e.OldStartingIndex, e.NewStartingIndex);
-                }
-                break;
-            case NotifyCollectionChangedAction.Remove:
-                {
-                    if (Tabs.Count == 1)
+                    if (HeadersContainer is not null)
                     {
-                        Tabs.Clear();
-                        return;
+                        var header = HeadersContainer.Children.ElementAt(e.OldStartingIndex);
+                        HeadersContainer.Children.Remove(header);
+                        HeadersContainer.Children.Insert(e.NewStartingIndex, header);
                     }
 
-                    if (e.OldStartingIndex < SelectedTabIndex)
+                    if (ContentContainer is not null)
                     {
-                        Tabs.RemoveAt(e.OldStartingIndex);
-                        SelectedTabIndex--;
-                    }
-                    else if (e.OldStartingIndex == SelectedTabIndex && e.OldStartingIndex == Tabs.Count - 1)
-                    {
-                        SelectedTabIndex--;
-                        Tabs.RemoveAt(e.OldStartingIndex);
-                    }
-                    else if (e.OldStartingIndex == SelectedTabIndex && e.OldStartingIndex != Tabs.Count - 1)
-                    {
-                        Tabs.RemoveAt(e.OldStartingIndex);
-                        var tab = Tabs.ElementAtOrDefault(SelectedTabIndex);
-                        tab.IsSelected = true;
-                    }
-                    else Tabs.RemoveAt(e.OldStartingIndex);
-                }
-                break;
-            case NotifyCollectionChangedAction.Replace:
-                {
-                    var tab = Tabs.ElementAt(e.OldStartingIndex);
-                    var newItem = e.NewItems[0];
-
-                    InitContentTemplate(newItem, tab);
-
-                    tab.Header = newItem;
-                    tab.BindingContext = newItem;
-                }
-                break;
-            case NotifyCollectionChangedAction.Reset:
-                {
-                    foreach (var item in Tabs)
-                    {
-                        item.PropertyChanged -= TabItem_PropertyChanged;
-                    }
-
-                    Tabs.Clear();
-                }
-                break;
-        }
-    }
-
-    private void Tabs_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        switch (e.Action)
-        {
-            case NotifyCollectionChangedAction.Add:
-                {
-                    foreach (var item in e.NewItems)
-                    {
-                        var tabItem = item as TabViewItem;
-                        tabItem.HideWhenDisabled = this.HideTabsWhenDisabled;
-                        tabItem.PropertyChanged += TabItem_PropertyChanged;
-
-                        if (!(tabItem.Header is View))
-                        {
-                            tabItem.TabViewHeaderItem.InitContent();
-                        }
-
-                        if (_headersContainer != null) _headersContainer.Children.Insert(e.NewStartingIndex, tabItem.TabViewHeaderItem);
-                        if (_contentContainer != null) _contentContainer.Children.Insert(e.NewStartingIndex, tabItem);
-                    }
-
-                    InitialTabSelect(e);
-                }
-                break;
-            case NotifyCollectionChangedAction.Move:
-                {
-                    if (_headersContainer != null)
-                    {
-                        var header = _headersContainer.Children.ElementAt(e.OldStartingIndex);
-                        _headersContainer.Children.Remove(header);
-                        _headersContainer.Children.Insert(e.NewStartingIndex, header);
-                    }
-
-                    if (_contentContainer != null)
-                    {
-                        var content = _contentContainer.Children.ElementAt(e.OldStartingIndex);
-                        _contentContainer.Children.Remove(content);
-                        _contentContainer.Children.Insert(e.NewStartingIndex, content);
+                        var content = ContentContainer.Children.ElementAt(e.OldStartingIndex);
+                        ContentContainer.Children.Remove(content);
+                        ContentContainer.Children.Insert(e.NewStartingIndex, content);
                     }
                 }
                 break;
             case NotifyCollectionChangedAction.Remove:
                 {
-                    _headersContainer?.Children.RemoveAt(e.OldStartingIndex);
-                    _contentContainer?.Children.RemoveAt(e.OldStartingIndex);
+                    foreach (TabViewItem item in e.OldItems!)
+                    {
+                        item!.PropertyChanged -= TabItem_PropertyChanged;
+
+                        HeadersContainer?.Children.RemoveAt(e.OldStartingIndex);
+                        ContentContainer?.Children.RemoveAt(e.OldStartingIndex);
+                    }
                 }
                 break;
             case NotifyCollectionChangedAction.Replace:
                 break;
             case NotifyCollectionChangedAction.Reset:
                 {
-                    _headersContainer?.Children.Clear();
-                    _contentContainer?.Children.Clear();
+                    HeadersContainer?.Children.Clear();
+                    ContentContainer?.Children.Clear();
                     SelectedTabIndex = -1;
                 }
                 break;
         }
     }
 
-    private void InitialTabSelect(NotifyCollectionChangedEventArgs e)
+    protected virtual void TabsInitialSelection(NotifyCollectionChangedEventArgs e)
     {
         if (SelectedTabIndex == -1)
         {
             if (Tabs.Any(t => t.IsSelected))
             {
-                SelectedTabIndex = Tabs.IndexOf(Tabs.FirstOrDefault(t => t.IsSelected));
+                SelectedTabIndex = Tabs.IndexOf(Tabs.First(t => t.IsSelected));
             }
             else
             {
                 var tab = Tabs.First();
-                if (!tab.IsEnabled) SelectClosestTab(tab, Tabs.Where(t => t.IsEnabled || t == tab).ToList());
+                if (!tab.IsEnabled) SelectClosestEnabledTab(tab);
                 else SelectedTabIndex = 0;
             }
         }
@@ -328,37 +338,58 @@ public class TabView : ContentView
             if (!Tabs.Any(t => t.IsSelected))
             {
                 var tab = Tabs.ElementAtOrDefault(SelectedTabIndex);
-                if (!tab.IsEnabled) SelectClosestTab(tab, Tabs.Where(t => t.IsEnabled || t == tab).ToList());
+                if (tab is null)
+                {
+                    if (Tabs.Count == 0) SelectedTabIndex = -1;
+                    else SelectedTabIndex = 0;
+                    return;
+                }
+                if (!tab.IsEnabled) SelectClosestEnabledTab(tab);
                 else tab.IsSelected = true;
             }
-            else if (e.NewStartingIndex <= SelectedTabIndex) SelectedTabIndex++;
+            else if (e.NewStartingIndex <= SelectedTabIndex)
+                SelectedTabIndex += (e.NewItems?.Count ?? 0) - (e.OldItems?.Count ?? 0);
         }
     }
 
-    private void TabItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    protected virtual void TabItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        var tab = sender as TabViewItem;
+        var tab = (sender as TabViewItem)!;
 
         if (e.PropertyName == TabViewItem.IsSelectedProperty.PropertyName && tab.IsSelected)
         {
-            if (tab.IsEnabled)
+            if (!tab.IsEnabled)
             {
-                SelectedTabIndex = Tabs.IndexOf(tab);
-                if (_headersScroll != null && ScrollToSelectedTab && _headersContainer.Width > _headersScroll.Width)
-                {
-                    var max = _headersContainer.Width - _headersScroll.Width;
-                    var scrollTo = tab.TabViewHeaderItem.X - (_headersScroll.Width - tab.TabViewHeaderItem.Width) / 2.0;
-                    if (scrollTo < 0) scrollTo = 0;
-                    else if (scrollTo > max) scrollTo = max;
-
-                    _headersScroll.ScrollToAsync(scrollTo, 0, true);
-                }
+                SelectClosestEnabledTab(tab);
+                return;
             }
-            else tab.IsSelected = false;
+
+            SelectedTabIndex = Tabs.IndexOf(tab);
+
+            if (HeadersScroll is null || !ScrollToSelectedTab) return;
+
+            if (HeaderBarAlignment is Alignment.Top or Alignment.Bottom
+                && HeadersContainer.Width > HeadersScroll.Width)
+            {
+                var max = HeadersContainer.Width - HeadersScroll.Width;
+                var scrollTo = tab.TabViewHeaderItem.X - (HeadersScroll.Width - tab.TabViewHeaderItem.Width) / 2.0;
+                scrollTo = Math.Max(0d, Math.Min(max, scrollTo));
+
+                HeadersScroll.ScrollToAsync(scrollTo, 0d, true);
+            }
+            else if (HeaderBarAlignment is Alignment.Left or Alignment.Right
+                && HeadersContainer.Height > HeadersScroll.Height)
+            {
+                var max = HeadersContainer.Height - HeadersScroll.Height;
+                var scrollTo = tab.TabViewHeaderItem.Y - (HeadersScroll.Height - tab.TabViewHeaderItem.Height) / 2.0;
+                scrollTo = Math.Max(0d, Math.Min(max, scrollTo));
+
+                HeadersScroll.ScrollToAsync(0d, scrollTo, true);
+            }
         }
         else if (e.PropertyName == TabViewItem.IsEnabledProperty.PropertyName)
         {
-            if (!tab.IsEnabled && tab.IsSelected) SelectClosestTab(tab, Tabs.Where(t => t.IsEnabled || t == tab).ToList());
+            if (!tab.IsEnabled && tab.IsSelected) SelectClosestEnabledTab(tab);
             else if (tab.IsEnabled && !Tabs.Any(t => t.IsSelected))
             {
                 var index = Tabs.IndexOf(tab);
@@ -367,27 +398,19 @@ public class TabView : ContentView
         }
     }
 
-    private void SelectClosestTab(TabViewItem tab, List<TabViewItem> tabs)
+    protected virtual void SelectClosestEnabledTab(TabViewItem tab)
     {
+        var tabs = Tabs.Where(t => t.IsEnabled || t == tab).ToList();
+
         if (tabs.Count == 1)
         {
             SelectedTabIndex = -1;
+            return;
         }
-        else
-        {
-            var index = tabs.IndexOf(tab);
 
-            if (index == tabs.Count - 1)
-            {
-                var tabToSelect = tabs.ElementAtOrDefault(index - 1);
-                SelectedTabIndex = Tabs.IndexOf(tabToSelect);
-            }
-            else if (index >= 0)
-            {
-                var tabToSelect = tabs.ElementAtOrDefault(index + 1);
-                SelectedTabIndex = Tabs.IndexOf(tabToSelect);
-            }
-        }
+        var index = tabs.IndexOf(tab);
+
+        tabs[index + (index == tabs.Count - 1 ? -1 : 1)].IsSelected = true;
     }
 
     #region HideTabsWhenDisabled
@@ -701,6 +724,4 @@ public class TabView : ContentView
             Alignment.Top
             );
     #endregion
-
-
 }

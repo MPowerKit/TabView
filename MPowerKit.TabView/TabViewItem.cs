@@ -5,20 +5,24 @@ namespace MPowerKit.TabView;
 
 public class TabViewItem : ContentView
 {
-    internal TabViewHeaderItem TabViewHeaderItem { get; set; } = new();
+    public TabViewHeaderItem TabViewHeaderItem { get; protected set; } = [];
 
     public TabViewItem()
     {
         TabViewHeaderItem.PropertyChanged += TabViewHeaderItem_PropertyChanged;
-        IsVisible = false;
+
+        SetBinding(IsVisibleProperty, new Binding(IsSelectedProperty.PropertyName, source: this));
+        TabViewHeaderItem.SetBinding(View.IsEnabledProperty, new Binding(IsEnabledProperty.PropertyName, mode: BindingMode.TwoWay, source: this));
+        TabViewHeaderItem.SetBinding(TabViewHeaderItem.HeaderContentProperty, new Binding(HeaderProperty.PropertyName, source: this));
+        TabViewHeaderItem.SetBinding(Grid.ColumnProperty, new Binding(ColumnProperty.PropertyName, source: this));
+        TabViewHeaderItem.SetBinding(Grid.RowProperty, new Binding(RowProperty.PropertyName, source: this));
     }
 
     private void TabViewHeaderItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == TabViewHeaderItem.IsSelectedProperty.PropertyName)
         {
-            this.IsSelected = TabViewHeaderItem.IsSelected;
-            this.IsVisible = this.IsSelected;
+            IsSelected = TabViewHeaderItem.IsSelected;
         }
     }
 
@@ -26,56 +30,24 @@ public class TabViewItem : ContentView
     {
         base.OnPropertyChanged(propertyName);
 
+        if (propertyName == IsEnabledProperty.PropertyName
+            || propertyName == IsSelectedProperty.PropertyName
+            && !IsEnabled && IsSelected)
+        {
+            IsSelected = false;
+        }
+
         if (propertyName == IsSelectedProperty.PropertyName)
         {
             TabViewHeaderItem.IsSelected = IsSelected;
         }
-        else if (propertyName == HeaderProperty.PropertyName)
-        {
-            TabViewHeaderItem.HeaderContent = Header;
-        }
-        else if (propertyName == IsEnabledProperty.PropertyName)
-        {
-            if (HideWhenDisabled && !this.IsEnabled) TabViewHeaderItem.IsVisible = false;
-            else
-            {
-                TabViewHeaderItem.IsVisible = true;
-                TabViewHeaderItem.IsEnabled = this.IsEnabled;
-            }
-            if (!this.IsEnabled && this.IsSelected) this.IsSelected = false;
-        }
-        else if (propertyName == HideWhenDisabledProperty.PropertyName)
-        {
-            if (HideWhenDisabled && !this.IsEnabled) TabViewHeaderItem.IsVisible = false;
-            else
-            {
-                TabViewHeaderItem.IsVisible = true;
-                TabViewHeaderItem.IsEnabled = this.IsEnabled;
-            }
-        }
     }
-
-    #region HideWhenDisabled
-    internal bool HideWhenDisabled
-    {
-        get { return (bool)GetValue(HideWhenDisabledProperty); }
-        set { SetValue(HideWhenDisabledProperty, value); }
-    }
-
-    internal static readonly BindableProperty HideWhenDisabledProperty =
-        BindableProperty.Create(
-            nameof(HideWhenDisabled),
-            typeof(bool),
-            typeof(TabViewItem),
-            true
-            );
-    #endregion
 
     #region IsSelected
     public bool IsSelected
     {
         get { return (bool)GetValue(IsSelectedProperty); }
-        internal set { SetValue(IsSelectedProperty, value); }
+        set { SetValue(IsSelectedProperty, value); }
     }
 
     public static readonly BindableProperty IsSelectedProperty =
@@ -97,6 +69,36 @@ public class TabViewItem : ContentView
         BindableProperty.Create(
             nameof(Header),
             typeof(object),
+            typeof(TabViewItem)
+            );
+    #endregion
+
+    #region Column
+    public int Column
+    {
+        get { return (int)GetValue(ColumnProperty); }
+        set { SetValue(ColumnProperty, value); }
+    }
+
+    public static readonly BindableProperty ColumnProperty =
+        BindableProperty.Create(
+            nameof(Column),
+            typeof(int),
+            typeof(TabViewItem)
+            );
+    #endregion
+
+    #region Row
+    public int Row
+    {
+        get { return (int)GetValue(RowProperty); }
+        set { SetValue(RowProperty, value); }
+    }
+
+    public static readonly BindableProperty RowProperty =
+        BindableProperty.Create(
+            nameof(Row),
+            typeof(int),
             typeof(TabViewItem)
             );
     #endregion

@@ -5,10 +5,11 @@
 		<UseMaui>true</UseMaui>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<MauiVersion>8.0.3</MauiVersion>
 
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Title>MPowerKit.TabView</Title>
-		<Version>1.1.1</Version>
+		<Version>1.2.0</Version>
 		<Authors>MPowerKit,Alex Dobrynin</Authors>
 		<Description>Fully customizable .NET MAUI TabView</Description>
 		<Copyright>MPowerKit</Copyright>
@@ -21,9 +22,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
-		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
 	</ItemGroup>
-
 
 	<ItemGroup>
 		<None Include="..\LICENSE">

@@ -2,9 +2,9 @@
 
 namespace MPowerKit.TabView;
 
-internal class TabViewHeaderItem : Grid
+public class TabViewHeaderItem : Grid
 {
-    private readonly DataTemplate _stringTemplate = new(() =>
+    protected readonly DataTemplate StringTemplate = new(() =>
     {
         var lbl = new Label()
         {
@@ -14,56 +14,63 @@ internal class TabViewHeaderItem : Grid
             HorizontalTextAlignment = TextAlignment.Center
         };
         lbl.SetBinding(Label.TextProperty, ".");
-        lbl.SetBinding(Label.TextColorProperty, new Binding("HeaderTextColor", source: RelativeBindingSource.TemplatedParent));
-        lbl.SetBinding(Label.FontFamilyProperty, new Binding("HeaderFontFamily", source: RelativeBindingSource.TemplatedParent));
-        lbl.SetBinding(Label.FontSizeProperty, new Binding("HeaderFontSize", source: RelativeBindingSource.TemplatedParent));
-        lbl.SetBinding(Label.FontAttributesProperty, new Binding("HeaderFontAttributes", source: RelativeBindingSource.TemplatedParent));
+        lbl.SetBinding(Label.TextColorProperty, new Binding(TabView.HeaderTextColorProperty.PropertyName, source: RelativeBindingSource.TemplatedParent));
+        lbl.SetBinding(Label.FontFamilyProperty, new Binding(TabView.HeaderFontFamilyProperty.PropertyName, source: RelativeBindingSource.TemplatedParent));
+        lbl.SetBinding(Label.FontSizeProperty, new Binding(TabView.HeaderFontSizeProperty.PropertyName, source: RelativeBindingSource.TemplatedParent));
+        lbl.SetBinding(Label.FontAttributesProperty, new Binding(TabView.HeaderFontAttributesProperty.PropertyName, source: RelativeBindingSource.TemplatedParent));
         return new ContentView()
         {
             Content = lbl,
             VerticalOptions = LayoutOptions.Fill,
             HorizontalOptions = LayoutOptions.Fill,
-            Padding = new Thickness(20, 0)
+            Padding = new Thickness(20, 10)
         };
     });
 
-    private View _selectedView;
-    private View _unselectedView;
+    protected View? SelectedView;
+    protected View? UnselectedView;
 
     public TabViewHeaderItem()
     {
         var tap = new TapGestureRecognizer();
         tap.Tapped += Tap_Tapped;
-        this.GestureRecognizers.Add(tap);
+        GestureRecognizers.Add(tap);
 
-        this.SetBinding(SelectedContentTemplateProperty, new Binding("SelectedHeaderTemplate", source: RelativeBindingSource.TemplatedParent));
-        this.SetBinding(ContentTemplateProperty, new Binding("HeaderTemplate", source: RelativeBindingSource.TemplatedParent));
+        SetBinding(SelectedContentTemplateProperty, new Binding(TabView.SelectedHeaderTemplateProperty.PropertyName, source: RelativeBindingSource.TemplatedParent));
+        SetBinding(ContentTemplateProperty, new Binding(TabView.HeaderTemplateProperty.PropertyName, source: RelativeBindingSource.TemplatedParent));
+        SetBinding(HideWhenDisabledProperty, new Binding(TabView.HideTabsWhenDisabledProperty.PropertyName, source: RelativeBindingSource.TemplatedParent));
     }
 
     private void Tap_Tapped(object? sender, EventArgs e)
     {
-        if (!this.IsSelected) this.IsSelected = true;
+        if (!IsEnabled) return;
+
+        if (!IsSelected) IsSelected = true;
     }
 
     protected override void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         base.OnPropertyChanged(propertyName);
 
+        if (propertyName == HideWhenDisabledProperty.PropertyName)
+        {
+            IsVisible = !HideWhenDisabled || IsEnabled;
+            return;
+        }
+
         if (propertyName == HeaderContentProperty.PropertyName && HeaderContent is View content)
         {
-            this.Children.Clear();
-            this.Children.Add(content);
+            Children.Clear();
+            Children.Add(content);
         }
 
         if (HeaderContent is View) return;
 
         else if (propertyName == IsSelectedProperty.PropertyName)
         {
-            if (IsSelected) this.SetBinding(View.BackgroundColorProperty, new Binding("SelectedHeaderBackgroundColor", source: RelativeBindingSource.TemplatedParent));
-            else this.SetBinding(View.BackgroundColorProperty, new Binding("HeaderBackgroundColor", source: RelativeBindingSource.TemplatedParent));
-
-            _selectedView.IsVisible = this.IsSelected;
-            _unselectedView.IsVisible = !this.IsSelected;
+            SetBinding(View.BackgroundColorProperty, new Binding(IsSelected
+                ? TabView.SelectedHeaderBackgroundColorProperty.PropertyName
+                : TabView.HeaderBackgroundColorProperty.PropertyName, source: RelativeBindingSource.TemplatedParent));
         }
         else if (propertyName == HeaderContentProperty.PropertyName
             || propertyName == SelectedContentTemplateProperty.PropertyName
@@ -73,41 +80,41 @@ internal class TabViewHeaderItem : Grid
         }
     }
 
-    internal void InitContent()
+    public virtual void InitContent()
     {
         var unselectedTemplate = ContentTemplate != null
-                                 ? (ContentTemplate is DataTemplateSelector selectorU ? selectorU.SelectTemplate(HeaderContent, null) : ContentTemplate)
-                                 : _stringTemplate;
+            ? (ContentTemplate is DataTemplateSelector selectorU ? selectorU.SelectTemplate(HeaderContent, null) : ContentTemplate)
+            : StringTemplate;
 
         var selectedTemplate = SelectedContentTemplate != null
-                               ? (SelectedContentTemplate is DataTemplateSelector selectorS ? selectorS.SelectTemplate(HeaderContent, null) : SelectedContentTemplate)
-                               : unselectedTemplate;
+            ? (SelectedContentTemplate is DataTemplateSelector selectorS ? selectorS.SelectTemplate(HeaderContent, null) : SelectedContentTemplate)
+            : unselectedTemplate;
 
         var context = HeaderContent;
         context ??= "Empty Header";
 
-        _selectedView = selectedTemplate.CreateContent() as View;
-        _selectedView.BindingContext = selectedTemplate == _stringTemplate ? context.ToString() : context;
+        SelectedView = selectedTemplate.CreateContent() as View;
+        SelectedView!.BindingContext = selectedTemplate == StringTemplate ? context.ToString() : context;
 
-        _unselectedView = unselectedTemplate.CreateContent() as View;
-        _unselectedView.BindingContext = unselectedTemplate == _stringTemplate ? context.ToString() : context;
+        UnselectedView = unselectedTemplate.CreateContent() as View;
+        UnselectedView!.BindingContext = unselectedTemplate == StringTemplate ? context.ToString() : context;
 
-        _selectedView.IsVisible = this.IsSelected;
-        _unselectedView.IsVisible = !this.IsSelected;
+        SelectedView.SetBinding(View.IsVisibleProperty, new Binding(IsSelectedProperty.PropertyName, source: this));
+        UnselectedView.SetBinding(View.IsVisibleProperty, new Binding(IsSelectedProperty.PropertyName, source: this, converter: new InverseBooleanConverter()));
 
-        this.Children.Clear();
-        this.Children.Add(_selectedView);
-        this.Children.Add(_unselectedView);
+        Children.Clear();
+        Children.Add(SelectedView);
+        Children.Add(UnselectedView);
     }
 
     #region IsSelected
-    internal bool IsSelected
+    public bool IsSelected
     {
         get { return (bool)GetValue(IsSelectedProperty); }
         set { SetValue(IsSelectedProperty, value); }
     }
 
-    internal static readonly BindableProperty IsSelectedProperty =
+    public static readonly BindableProperty IsSelectedProperty =
         BindableProperty.Create(
             nameof(IsSelected),
             typeof(bool),
@@ -116,13 +123,13 @@ internal class TabViewHeaderItem : Grid
     #endregion
 
     #region HeaderContent
-    internal object HeaderContent
+    public object HeaderContent
     {
         get { return (object)GetValue(HeaderContentProperty); }
         set { SetValue(HeaderContentProperty, value); }
     }
 
-    internal static readonly BindableProperty HeaderContentProperty =
+    public static readonly BindableProperty HeaderContentProperty =
         BindableProperty.Create(
             nameof(HeaderContent),
             typeof(object),
@@ -131,13 +138,13 @@ internal class TabViewHeaderItem : Grid
     #endregion
 
     #region SelectedContentTemplate
-    internal DataTemplate SelectedContentTemplate
+    public DataTemplate SelectedContentTemplate
     {
         get { return (DataTemplate)GetValue(SelectedContentTemplateProperty); }
         set { SetValue(SelectedContentTemplateProperty, value); }
     }
 
-    internal static readonly BindableProperty SelectedContentTemplateProperty =
+    public static readonly BindableProperty SelectedContentTemplateProperty =
         BindableProperty.Create(
             nameof(SelectedContentTemplate),
             typeof(DataTemplate),
@@ -146,17 +153,33 @@ internal class TabViewHeaderItem : Grid
     #endregion
 
     #region ContentTemplate
-    internal DataTemplate ContentTemplate
+    public DataTemplate ContentTemplate
     {
         get { return (DataTemplate)GetValue(ContentTemplateProperty); }
         set { SetValue(ContentTemplateProperty, value); }
     }
 
-    internal static readonly BindableProperty ContentTemplateProperty =
+    public static readonly BindableProperty ContentTemplateProperty =
         BindableProperty.Create(
             nameof(ContentTemplate),
             typeof(DataTemplate),
             typeof(TabViewHeaderItem)
+            );
+    #endregion
+
+    #region HideWhenDisabled
+    public bool HideWhenDisabled
+    {
+        get { return (bool)GetValue(HideWhenDisabledProperty); }
+        set { SetValue(HideWhenDisabledProperty, value); }
+    }
+
+    public static readonly BindableProperty HideWhenDisabledProperty =
+        BindableProperty.Create(
+            nameof(HideWhenDisabled),
+            typeof(bool),
+            typeof(TabViewHeaderItem),
+            true
             );
     #endregion
 }

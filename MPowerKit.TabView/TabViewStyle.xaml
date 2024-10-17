@@ -12,70 +12,130 @@
         <Setter Property="ControlTemplate">
             <Setter.Value>
                 <ControlTemplate>
-                    <Grid RowSpacing="0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+                    <Grid ColumnSpacing="0"
+                          RowSpacing="0">
                         <Grid.Triggers>
                             <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
                                          TargetType="Grid"
-                                         Value="Bottom">
-                                <Setter Property="Rotation"
-                                        Value="180" />
+                                         Value="Top">
+                                <Setter Property="RowDefinitions"
+                                        Value="Auto,*" />
+                                <Setter Property="ColumnDefinitions"
+                                        Value="*" />
                             </DataTrigger>
                             <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
                                          TargetType="Grid"
-                                         Value="Top">
-                                <Setter Property="Rotation"
-                                        Value="0" />
+                                         Value="Bottom">
+                                <Setter Property="RowDefinitions"
+                                        Value="*,Auto" />
+                                <Setter Property="ColumnDefinitions"
+                                        Value="*" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
+                                         TargetType="Grid"
+                                         Value="Left">
+                                <Setter Property="RowDefinitions"
+                                        Value="*" />
+                                <Setter Property="ColumnDefinitions"
+                                        Value="Auto,*" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
+                                         TargetType="Grid"
+                                         Value="Right">
+                                <Setter Property="RowDefinitions"
+                                        Value="*" />
+                                <Setter Property="ColumnDefinitions"
+                                        Value="*,Auto" />
                             </DataTrigger>
                         </Grid.Triggers>
                         <ScrollView x:Name="PART_HeadersScrollView"
-                                    Grid.Row="0"
                                     Margin="{TemplateBinding Padding}"
                                     BackgroundColor="{TemplateBinding HeaderBarBackgroundColor}"
                                     HeightRequest="{TemplateBinding HeaderHeightRequest}"
                                     HorizontalOptions="Fill"
                                     HorizontalScrollBarVisibility="Never"
-                                    Orientation="Horizontal"
                                     VerticalOptions="Fill"
                                     VerticalScrollBarVisibility="Never">
                             <ScrollView.Triggers>
                                 <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
                                              TargetType="ScrollView"
-                                             Value="Bottom">
-                                    <Setter Property="Rotation"
-                                            Value="180" />
+                                             Value="Top">
+                                    <Setter Property="Orientation"
+                                            Value="Horizontal" />
+                                    <Setter Property="Grid.Row"
+                                            Value="0" />
+                                    <Setter Property="Grid.Column"
+                                            Value="0" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
                                              TargetType="ScrollView"
-                                             Value="Top">
-                                    <Setter Property="Rotation"
+                                             Value="Bottom">
+                                    <Setter Property="Orientation"
+                                            Value="Horizontal" />
+                                    <Setter Property="Grid.Row"
+                                            Value="1" />
+                                    <Setter Property="Grid.Column"
                                             Value="0" />
                                 </DataTrigger>
+                                <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
+                                             TargetType="ScrollView"
+                                             Value="Left">
+                                    <Setter Property="Orientation"
+                                            Value="Vertical" />
+                                    <Setter Property="Grid.Row"
+                                            Value="0" />
+                                    <Setter Property="Grid.Column"
+                                            Value="0" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
+                                             TargetType="ScrollView"
+                                             Value="Right">
+                                    <Setter Property="Orientation"
+                                            Value="Vertical" />
+                                    <Setter Property="Grid.Row"
+                                            Value="0" />
+                                    <Setter Property="Grid.Column"
+                                            Value="1" />
+                                </DataTrigger>
                             </ScrollView.Triggers>
-                            <controls:ItemsPresenter HorizontalOptions="Fill"
-                                                     VerticalOptions="Fill" />
+                            <controls:ItemsPresenter />
                         </ScrollView>
 
                         <Grid x:Name="PART_ContentContainer"
                               Grid.Row="1"
                               Margin="{TemplateBinding Padding}"
-                              BackgroundColor="{TemplateBinding ContentBackgroundColor}"
-                              HorizontalOptions="Fill"
-                              VerticalOptions="Fill">
+                              BackgroundColor="{TemplateBinding ContentBackgroundColor}">
                             <Grid.Triggers>
                                 <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
                                              TargetType="Grid"
-                                             Value="Bottom">
-                                    <Setter Property="Rotation"
-                                            Value="180" />
+                                             Value="Top">
+                                    <Setter Property="Grid.Row"
+                                            Value="1" />
+                                    <Setter Property="Grid.Column"
+                                            Value="0" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
                                              TargetType="Grid"
-                                             Value="Top">
-                                    <Setter Property="Rotation"
+                                             Value="Bottom">
+                                    <Setter Property="Grid.Row"
+                                            Value="0" />
+                                    <Setter Property="Grid.Column"
+                                            Value="0" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
+                                             TargetType="Grid"
+                                             Value="Left">
+                                    <Setter Property="Grid.Row"
+                                            Value="0" />
+                                    <Setter Property="Grid.Column"
+                                            Value="1" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{TemplateBinding HeaderBarAlignment}"
+                                             TargetType="Grid"
+                                             Value="Right">
+                                    <Setter Property="Grid.Row"
+                                            Value="0" />
+                                    <Setter Property="Grid.Column"
                                             Value="0" />
                                 </DataTrigger>
                             </Grid.Triggers>

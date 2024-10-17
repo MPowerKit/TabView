@@ -2,5 +2,8 @@
 
 public enum Alignment
 {
-    Top, Bottom
+    Top,
+    Bottom,
+    Left,
+    Right
 }
