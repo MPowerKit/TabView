@@ -5,6 +5,8 @@ It is written using .NET MAUI without native code and it is fully compatible wit
 
 [![NuGet](https://img.shields.io/nuget/v/MPowerKit.TabView.svg?maxAge=2592000)](https://www.nuget.org/packages/MPowerKit.TabView)
 
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/alexdobrynin)
+
 ### Initialize:
 Make sure to initialize the UI of the TabView inside your App.xaml file:
 
