@@ -39,7 +39,8 @@ public class TabViewHeaderItem : Grid
         SetBinding(SelectedContentTemplateProperty, new Binding(TabView.SelectedHeaderTemplateProperty.PropertyName, source: RelativeBindingSource.TemplatedParent));
         SetBinding(ContentTemplateProperty, new Binding(TabView.HeaderTemplateProperty.PropertyName, source: RelativeBindingSource.TemplatedParent));
         SetBinding(HideWhenDisabledProperty, new Binding(TabView.HideTabsWhenDisabledProperty.PropertyName, source: RelativeBindingSource.TemplatedParent));
-    }
+		SetBinding(BackgroundColorProperty, new Binding(TabView.HeaderBackgroundColorProperty.PropertyName, source: RelativeBindingSource.TemplatedParent));
+	}
 
     private void Tap_Tapped(object? sender, EventArgs e)
     {
