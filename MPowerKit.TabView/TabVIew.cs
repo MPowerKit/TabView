@@ -320,38 +320,57 @@ public class TabView : ContentView
 
     protected virtual void TabsInitialSelection(NotifyCollectionChangedEventArgs e)
     {
-        if (SelectedTabIndex == -1)
+        if (Tabs.Count == 0)
         {
-            if (Tabs.Any(t => t.IsSelected))
-            {
-                SelectedTabIndex = Tabs.IndexOf(Tabs.First(t => t.IsSelected));
-            }
+            return;
+        }
+
+        if (Index >= 0 && Index < Tabs.Count)
+        {
+            var tab = Tabs[Index];
+            if (tab.IsEnabled)
+                tab.IsSelected = true;
             else
-            {
-                var tab = Tabs.First();
-                if (!tab.IsEnabled) SelectClosestEnabledTab(tab);
-                else SelectedTabIndex = 0;
-            }
+                SelectClosestEnabledTab(tab);
+
+            return;
+        }
+
+        if (Tabs.Any(t => t.IsSelected))
+        {
+            var selectedTab = Tabs.First(t => t.IsSelected);
+            if (!selectedTab.IsEnabled)
+                SelectClosestEnabledTab(selectedTab);
+
+            return;
+        }
+
+        var firstTab = Tabs.First();
+        if (firstTab.IsEnabled)
+            firstTab.IsSelected = true;
+        else
+
+            SelectClosestEnabledTab(firstTab);
+
+    }
+    private static void OnIndexChanged(BindableObject bindable, object oldValue, object newValue)
+    {
+        var tabView = (TabView)bindable;
+        var newIndex = (int)newValue;
+
+        if (newIndex < 0 || newIndex >= tabView.Tabs.Count || tabView.Tabs[newIndex] == null)
+            return;
+
+        var selectedTab = tabView.Tabs[newIndex];
+        if (selectedTab.IsEnabled)
+        {
+            selectedTab.IsSelected = true;
         }
         else
         {
-            if (!Tabs.Any(t => t.IsSelected))
-            {
-                var tab = Tabs.ElementAtOrDefault(SelectedTabIndex);
-                if (tab is null)
-                {
-                    if (Tabs.Count == 0) SelectedTabIndex = -1;
-                    else SelectedTabIndex = 0;
-                    return;
-                }
-                if (!tab.IsEnabled) SelectClosestEnabledTab(tab);
-                else tab.IsSelected = true;
-            }
-            else if (e.NewStartingIndex <= SelectedTabIndex)
-                SelectedTabIndex += (e.NewItems?.Count ?? 0) - (e.OldItems?.Count ?? 0);
+            tabView.SelectClosestEnabledTab(selectedTab);
         }
     }
-
     protected virtual void TabItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         var tab = (sender as TabViewItem)!;
@@ -601,6 +620,22 @@ public class TabView : ContentView
             typeof(TabView),
             Colors.Black
             );
+    #endregion
+
+    #region Index
+    public int Index
+    {
+        get { return (int)GetValue(IndexProperty); }
+        set { SetValue(IndexProperty, value); }
+    }
+
+    public static readonly BindableProperty IndexProperty =
+        BindableProperty.Create(
+            nameof(Index),
+            typeof(int),
+            typeof(TabView),
+            -1,
+            propertyChanged: OnIndexChanged);
     #endregion
 
     #region SelectedTabIndex
